@@ -1,0 +1,25 @@
+{
+  "name": "aws-cloud-backend",
+  "version": "1.0.0",
+  "description": "AWS CDK backend services for the RS School AWS course.",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "test": "node --test --import tsx \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.15.3",
+    "aws-cdk": "^2.190.0",
+    "esbuild": "^0.25.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.190.0",
+    "constructs": "^10.4.2"
+  }
+}

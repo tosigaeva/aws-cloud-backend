@@ -1,0 +1,208 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Product Service API",
+    "description": "Serverless Product Service API powered by AWS API Gateway and AWS Lambda.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://{apiId}.execute-api.{region}.amazonaws.com/dev",
+      "description": "AWS API Gateway deployment",
+      "variables": {
+        "apiId": {
+          "default": "your-api-id"
+        },
+        "region": {
+          "default": "eu-central-1"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "summary": "Get products list",
+        "operationId": "getProductsList",
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "Full list of products",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/AccessControlAllowOrigin"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "7567ec4b-b10c-48c5-9345-fc73c48a80aa",
+                    "title": "Cloud Native Backpack",
+                    "description": "Durable daypack with a laptop sleeve and weather-resistant shell.",
+                    "price": 79,
+                    "count": 12
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "summary": "CORS support",
+        "operationId": "productsOptions",
+        "tags": [
+          "CORS"
+        ],
+        "responses": {
+          "204": {
+            "description": "CORS preflight response"
+          }
+        }
+      }
+    },
+    "/products/{productId}": {
+      "get": {
+        "summary": "Get product by id",
+        "operationId": "getProductsById",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "description": "Product unique identifier",
+            "schema": {
+              "type": "string"
+            },
+            "example": "7567ec4b-b10c-48c5-9345-fc73c48a80aa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product found",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/AccessControlAllowOrigin"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                },
+                "example": {
+                  "id": "7567ec4b-b10c-48c5-9345-fc73c48a80aa",
+                  "title": "Cloud Native Backpack",
+                  "description": "Durable daypack with a laptop sleeve and weather-resistant shell.",
+                  "price": 79,
+                  "count": 12
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product was not found",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/AccessControlAllowOrigin"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "message": "Product not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "summary": "CORS support",
+        "operationId": "productByIdOptions",
+        "tags": [
+          "CORS"
+        ],
+        "responses": {
+          "204": {
+            "description": "CORS preflight response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "headers": {
+      "AccessControlAllowOrigin": {
+        "description": "Allowed origin for browser clients",
+        "schema": {
+          "type": "string",
+          "example": "*"
+        }
+      }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "price",
+          "count"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "7567ec4b-b10c-48c5-9345-fc73c48a80aa"
+          },
+          "title": {
+            "type": "string",
+            "example": "Cloud Native Backpack"
+          },
+          "description": {
+            "type": "string",
+            "example": "Durable daypack with a laptop sleeve and weather-resistant shell."
+          },
+          "price": {
+            "type": "number",
+            "example": 79
+          },
+          "count": {
+            "type": "integer",
+            "example": 12
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Product not found"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

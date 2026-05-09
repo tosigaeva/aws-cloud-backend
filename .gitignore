@@ -1,0 +1,9 @@
+.idea
+node_modules
+cdk.out
+dist
+.env
+*.js
+*.d.ts
+*.tsbuildinfo
+!jest.config.js

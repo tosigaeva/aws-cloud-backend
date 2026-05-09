@@ -8,7 +8,8 @@
     "cdk": "cdk",
     "synth": "cdk synth",
     "deploy": "cdk deploy",
-    "test": "node --test --import tsx \"test/**/*.test.ts\""
+    "test": "node --test --import tsx \"test/**/*.test.ts\"",
+    "seed": "node --import tsx scripts/seed-products.ts"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",
@@ -19,6 +20,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.798.0",
+    "@aws-sdk/lib-dynamodb": "^3.798.0",
     "aws-cdk-lib": "^2.190.0",
     "constructs": "^10.4.2"
   }

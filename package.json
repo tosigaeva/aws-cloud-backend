@@ -7,7 +7,7 @@
     "build": "tsc",
     "cdk": "cdk",
     "synth": "cdk synth",
-    "deploy": "cdk deploy",
+    "deploy": "cdk deploy --all",
     "test": "node --test --import tsx \"test/**/*.test.ts\"",
     "seed": "node --import tsx scripts/seed-products.ts"
   },
@@ -21,8 +21,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.798.0",
+    "@aws-sdk/client-s3": "^3.821.0",
     "@aws-sdk/lib-dynamodb": "^3.798.0",
+    "@aws-sdk/s3-request-presigner": "^3.821.0",
     "aws-cdk-lib": "^2.190.0",
-    "constructs": "^10.4.2"
+    "constructs": "^10.4.2",
+    "csv-parser": "^3.2.0"
   }
 }

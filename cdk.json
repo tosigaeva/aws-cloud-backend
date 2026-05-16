@@ -1,5 +1,5 @@
 {
-  "app": "node --import tsx bin/product-service.ts",
+  "app": "node --import tsx bin/app.ts",
   "watch": {
     "include": [
       "**"

@@ -55,3 +55,23 @@ npm run deploy
 ```
 
 After deployment, CDK prints the `ProductsApiUrl` output for frontend integration.
+
+## Import Service
+
+The Import Service exposes a signed S3 upload URL endpoint and parses uploaded CSV files.
+
+### Endpoints
+
+- `GET /import?name=products.csv` returns a clean signed URL string for uploading `uploaded/products.csv`.
+
+### S3 Flow
+
+The CDK stack provisions an S3 bucket with browser PUT CORS enabled.
+
+1. Frontend calls `GET /import?name=<fileName>`.
+2. Import Service returns a signed S3 URL.
+3. Frontend uploads the CSV with `PUT` to the signed URL.
+4. `importFileParser` is triggered by `s3:ObjectCreated:*` events under `uploaded/`.
+5. The parser logs CSV records, copies the file to `parsed/`, and deletes it from `uploaded/`.
+
+After deployment, CDK prints the `ImportApiUrl` output for frontend integration.

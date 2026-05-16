@@ -2,6 +2,8 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 
@@ -17,10 +19,36 @@ export class ProductServiceStack extends cdk.Stack {
       memorySize: 128,
     };
 
+    const productsTable = new dynamodb.Table(this, 'ProductsTable', {
+      tableName: 'products',
+      partitionKey: {
+        name: 'id',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const stocksTable = new dynamodb.Table(this, 'StocksTable', {
+      tableName: 'stocks',
+      partitionKey: {
+        name: 'product_id',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const tableEnvironment = {
+      PRODUCTS_TABLE_NAME: productsTable.tableName,
+      STOCKS_TABLE_NAME: stocksTable.tableName,
+    };
+
     const getProductsList = new NodejsFunction(this, 'getProductsList', {
       ...sharedLambdaProps,
       functionName: 'getProductsList',
       entry: path.join(__dirname, '../src/lambdas/getProductsList/index.ts'),
+      environment: tableEnvironment,
       bundling: {
         minify: true,
         sourceMap: true,
@@ -31,15 +59,41 @@ export class ProductServiceStack extends cdk.Stack {
       ...sharedLambdaProps,
       functionName: 'getProductsById',
       entry: path.join(__dirname, '../src/lambdas/getProductsById/index.ts'),
+      environment: tableEnvironment,
       bundling: {
         minify: true,
         sourceMap: true,
       },
     });
 
+    const createProduct = new NodejsFunction(this, 'createProduct', {
+      ...sharedLambdaProps,
+      functionName: 'createProduct',
+      entry: path.join(__dirname, '../src/lambdas/createProduct/index.ts'),
+      environment: tableEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+    });
+
+    productsTable.grantReadData(getProductsList);
+    stocksTable.grantReadData(getProductsList);
+    productsTable.grantReadData(getProductsById);
+    stocksTable.grantReadData(getProductsById);
+    productsTable.grantWriteData(createProduct);
+    stocksTable.grantWriteData(createProduct);
+    createProduct.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['dynamodb:TransactWriteItems'],
+      resources: [
+        productsTable.tableArn,
+        stocksTable.tableArn,
+      ],
+    }));
+
     const api = new apigateway.RestApi(this, 'ProductServiceApi', {
       restApiName: 'Product Service',
-      description: 'Public API for product catalog mock data.',
+      description: 'Public API for product catalog data.',
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
@@ -52,13 +106,14 @@ export class ProductServiceStack extends cdk.Stack {
 
     const products = api.root.addResource('products');
     products.addMethod('GET', new apigateway.LambdaIntegration(getProductsList));
+    products.addMethod('POST', new apigateway.LambdaIntegration(createProduct));
 
     const product = products.addResource('{productId}');
     product.addMethod('GET', new apigateway.LambdaIntegration(getProductsById));
 
     new cdk.CfnOutput(this, 'ProductsApiUrl', {
       value: api.urlForPath('/products'),
-      description: 'GET products list endpoint',
+      description: 'Products endpoint',
     });
   }
 }

@@ -1,0 +1,7 @@
+{
+  "ImportServiceStack": {
+    "ImportServiceApiEndpoint08D58EAA": "https://3n1dqwgua4.execute-api.eu-central-1.amazonaws.com/dev/",
+    "ImportBucketName": "importservicestack-importbucketbaf3a8e9-uoh44wel0nw0",
+    "ImportApiUrl": "https://3n1dqwgua4.execute-api.eu-central-1.amazonaws.com/dev/import"
+  }
+}

@@ -5,6 +5,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult, S3Event } from 'aws-l
 import { createImportFileParserHandler } from '../import-service/src/lambdas/importFileParser';
 import { createImportProductsFileHandler } from '../import-service/src/lambdas/importProductsFile';
 import type { S3ObjectRepository } from '../import-service/src/repositories/s3ObjectRepository';
+import type { CatalogItemsQueue } from '../import-service/src/repositories/sqsCatalogItemsQueue';
 
 const apiEvent = (name?: string) => ({
   path: '/import',
@@ -49,6 +50,7 @@ test('importProductsFile returns 400 when file name is missing', async () => {
 
 test('importFileParser reads CSV and moves parsed file', async () => {
   const calls: string[] = [];
+  const records: Record<string, string>[] = [];
   const repository: S3ObjectRepository = {
     async getObjectStream() {
       calls.push('getObjectStream');
@@ -62,10 +64,23 @@ test('importFileParser reads CSV and moves parsed file', async () => {
       calls.push(`delete:${key}`);
     },
   };
-  const handler = createImportFileParserHandler(repository);
+  const queue: CatalogItemsQueue = {
+    async sendCatalogItem(record) {
+      records.push(record);
+    },
+  };
+  const handler = createImportFileParserHandler(repository, queue);
 
   await handler(s3Event('imports-bucket', 'uploaded/products.csv'), null as never, null as never);
 
+  assert.deepEqual(records, [
+    {
+      title: 'Test product',
+      description: 'Imported',
+      price: '10',
+      count: '3',
+    },
+  ]);
   assert.deepEqual(calls, [
     'getObjectStream',
     'copy:uploaded/products.csv:parsed/products.csv',

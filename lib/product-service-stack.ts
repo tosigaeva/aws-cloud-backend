@@ -5,9 +5,15 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as eventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ProductServiceStack extends cdk.Stack {
+  public readonly catalogItemsQueue: sqs.Queue;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -44,6 +50,31 @@ export class ProductServiceStack extends cdk.Stack {
       STOCKS_TABLE_NAME: stocksTable.tableName,
     };
 
+    this.catalogItemsQueue = new sqs.Queue(this, 'catalogItemsQueue', {
+      queueName: 'catalogItemsQueue',
+    });
+
+    const createProductTopic = new sns.Topic(this, 'createProductTopic', {
+      topicName: 'createProductTopic',
+    });
+
+    const productCreatedEmail = this.node.tryGetContext('productCreatedEmail');
+    const expensiveProductCreatedEmail = this.node.tryGetContext('expensiveProductCreatedEmail');
+
+    if (productCreatedEmail) {
+      createProductTopic.addSubscription(new subscriptions.EmailSubscription(productCreatedEmail));
+    }
+
+    if (expensiveProductCreatedEmail) {
+      createProductTopic.addSubscription(new subscriptions.EmailSubscription(expensiveProductCreatedEmail, {
+        filterPolicy: {
+          priceCategory: sns.SubscriptionFilter.stringFilter({
+            allowlist: ['expensive'],
+          }),
+        },
+      }));
+    }
+
     const getProductsList = new NodejsFunction(this, 'getProductsList', {
       ...sharedLambdaProps,
       functionName: 'getProductsList',
@@ -77,12 +108,29 @@ export class ProductServiceStack extends cdk.Stack {
       },
     });
 
+    const catalogBatchProcess = new NodejsFunction(this, 'catalogBatchProcess', {
+      ...sharedLambdaProps,
+      functionName: 'catalogBatchProcess',
+      entry: path.join(__dirname, '../src/lambdas/catalogBatchProcess/index.ts'),
+      timeout: cdk.Duration.seconds(30),
+      environment: {
+        ...tableEnvironment,
+        CREATE_PRODUCT_TOPIC_ARN: createProductTopic.topicArn,
+      },
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+    });
+
     productsTable.grantReadData(getProductsList);
     stocksTable.grantReadData(getProductsList);
     productsTable.grantReadData(getProductsById);
     stocksTable.grantReadData(getProductsById);
     productsTable.grantWriteData(createProduct);
     stocksTable.grantWriteData(createProduct);
+    productsTable.grantWriteData(catalogBatchProcess);
+    stocksTable.grantWriteData(catalogBatchProcess);
     createProduct.addToRolePolicy(new iam.PolicyStatement({
       actions: ['dynamodb:TransactWriteItems'],
       resources: [
@@ -90,6 +138,18 @@ export class ProductServiceStack extends cdk.Stack {
         stocksTable.tableArn,
       ],
     }));
+    catalogBatchProcess.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['dynamodb:TransactWriteItems'],
+      resources: [
+        productsTable.tableArn,
+        stocksTable.tableArn,
+      ],
+    }));
+    this.catalogItemsQueue.grantConsumeMessages(catalogBatchProcess);
+    catalogBatchProcess.addEventSource(new eventSources.SqsEventSource(this.catalogItemsQueue, {
+      batchSize: 5,
+    }));
+    createProductTopic.grantPublish(catalogBatchProcess);
 
     const api = new apigateway.RestApi(this, 'ProductServiceApi', {
       restApiName: 'Product Service',

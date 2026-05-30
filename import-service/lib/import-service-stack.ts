@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -10,6 +11,7 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export type ImportServiceStackProps = cdk.StackProps & {
   catalogItemsQueue: sqs.IQueue;
+  basicAuthorizer: lambda.IFunction;
 };
 
 export class ImportServiceStack extends cdk.Stack {
@@ -79,7 +81,20 @@ export class ImportServiceStack extends cdk.Stack {
     });
 
     const importResource = api.root.addResource('import');
+    const authorizerInvokeRole = new iam.Role(this, 'ImportBasicAuthorizerInvokeRole', {
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+    });
+    props.basicAuthorizer.grantInvoke(authorizerInvokeRole);
+
+    const basicAuthorizer = new apigateway.TokenAuthorizer(this, 'ImportBasicAuthorizer', {
+      handler: props.basicAuthorizer,
+      identitySource: apigateway.IdentitySource.header('Authorization'),
+      assumeRole: authorizerInvokeRole,
+    });
+
     importResource.addMethod('GET', new apigateway.LambdaIntegration(importProductsFile), {
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+      authorizer: basicAuthorizer,
       requestParameters: {
         'method.request.querystring.name': true,
       },

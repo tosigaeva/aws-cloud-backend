@@ -61,6 +61,8 @@ To configure SNS email subscriptions for imported product notifications, create 
 ```env
 PRODUCT_CREATED_EMAIL=you@example.com
 EXPENSIVE_PRODUCT_CREATED_EMAIL=you+expensive@example.com
+AUTH_LOGIN=tosigaeva
+AUTH_PASSWORD=TEST_PASSWORD
 ```
 
 `npm run deploy` loads these values and passes them to CDK context.
@@ -84,6 +86,27 @@ The CDK stack provisions an S3 bucket with browser PUT CORS enabled.
 5. The parser sends CSV records to SQS, copies the file to `parsed/`, and deletes it from `uploaded/`.
 
 After deployment, CDK prints the `ImportApiUrl` output for frontend integration.
+
+## Authorization Service
+
+The Authorization Service contains `basicAuthorizer`, a Lambda authorizer for the Import Service `/import` endpoint.
+
+- Missing `Authorization` header returns `401 Unauthorized`.
+- Invalid Basic credentials return `403 Forbidden`.
+- Valid Basic credentials return an Allow IAM policy for the requested API Gateway method.
+
+Before deploying Task 7, create `.env` from `.env.example` and set:
+
+```env
+AUTH_LOGIN=tosigaeva
+AUTH_PASSWORD=TEST_PASSWORD
+```
+
+For frontend testing, save the base64 value of `tosigaeva:TEST_PASSWORD` in browser local storage:
+
+```js
+localStorage.setItem('authorization_token', btoa('tosigaeva:TEST_PASSWORD'));
+```
 
 ## Async Catalog Import
 

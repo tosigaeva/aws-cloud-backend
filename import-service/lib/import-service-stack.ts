@@ -9,6 +9,12 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 
+const corsResponseHeaders = {
+  'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+  'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'",
+  'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,OPTIONS'",
+};
+
 export type ImportServiceStackProps = cdk.StackProps & {
   catalogItemsQueue: sqs.IQueue;
   basicAuthorizer: lambda.IFunction;
@@ -73,12 +79,27 @@ export class ImportServiceStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
+        allowHeaders: [
+          ...apigateway.Cors.DEFAULT_HEADERS,
+          'Authorization',
+        ],
       },
       deployOptions: {
         stageName: 'dev',
       },
     });
+
+    for (const [id, responseType] of [
+      ['UnauthorizedCorsResponse', apigateway.ResponseType.UNAUTHORIZED],
+      ['AccessDeniedCorsResponse', apigateway.ResponseType.ACCESS_DENIED],
+      ['Default4xxCorsResponse', apigateway.ResponseType.DEFAULT_4XX],
+      ['Default5xxCorsResponse', apigateway.ResponseType.DEFAULT_5XX],
+    ] as const) {
+      api.addGatewayResponse(id, {
+        type: responseType,
+        responseHeaders: corsResponseHeaders,
+      });
+    }
 
     const importResource = api.root.addResource('import');
     const authorizerInvokeRole = new iam.Role(this, 'ImportBasicAuthorizerInvokeRole', {
@@ -90,6 +111,7 @@ export class ImportServiceStack extends cdk.Stack {
       handler: props.basicAuthorizer,
       identitySource: apigateway.IdentitySource.header('Authorization'),
       assumeRole: authorizerInvokeRole,
+      resultsCacheTtl: cdk.Duration.seconds(0),
     });
 
     importResource.addMethod('GET', new apigateway.LambdaIntegration(importProductsFile), {

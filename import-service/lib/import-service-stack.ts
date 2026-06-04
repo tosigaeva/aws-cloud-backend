@@ -111,7 +111,6 @@ export class ImportServiceStack extends cdk.Stack {
       handler: props.basicAuthorizer,
       identitySource: apigateway.IdentitySource.header('Authorization'),
       assumeRole: authorizerInvokeRole,
-      resultsCacheTtl: cdk.Duration.seconds(0),
     });
 
     importResource.addMethod('GET', new apigateway.LambdaIntegration(importProductsFile), {

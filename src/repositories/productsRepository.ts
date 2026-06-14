@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
 import {
   DynamoDBDocumentClient,
   GetCommand,
@@ -8,7 +9,12 @@ import {
 import type { ProductRecord, StockRecord } from '../models/product';
 import type { ProductsRepository } from '../services/productService';
 
-const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({
+  requestHandler: new NodeHttpHandler({
+    connectionTimeout: 2000,
+    requestTimeout: 5000,
+  }),
+}));
 
 const getRequiredEnv = (name: string) => {
   const value = process.env[name];

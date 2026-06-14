@@ -1,11 +1,13 @@
-import type { APIGatewayProxyHandler } from 'aws-lambda';
+import type { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 import { createProductsRepository } from '../../repositories/productsRepository';
 import { getProductById } from '../../services/productService';
 import type { ProductsRepository } from '../../services/productService';
 import { handleError } from '../errorHandler';
 import { jsonResponse } from '../response';
 
-export const createGetProductsByIdHandler = (repository: ProductsRepository): APIGatewayProxyHandler => async (event) => {
+export const createGetProductsByIdHandler = (
+  repository: ProductsRepository,
+) => async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('getProductsById request received', {
     path: event.path,
     pathParameters: event.pathParameters,
@@ -30,6 +32,6 @@ export const createGetProductsByIdHandler = (repository: ProductsRepository): AP
   }
 };
 
-export const handler: APIGatewayProxyHandler = (event, context, callback) => (
-  createGetProductsByIdHandler(createProductsRepository())(event, context, callback)
+export const handler: APIGatewayProxyHandler = async (event) => (
+  createGetProductsByIdHandler(createProductsRepository())(event)
 );

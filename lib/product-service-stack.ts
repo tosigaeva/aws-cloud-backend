@@ -21,8 +21,8 @@ export class ProductServiceStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       handler: 'index.handler',
-      timeout: cdk.Duration.seconds(5),
-      memorySize: 128,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
     };
 
     const productsTable = new dynamodb.Table(this, 'ProductsTable', {

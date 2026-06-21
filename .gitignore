@@ -7,3 +7,4 @@ dist
 *.d.ts
 *.tsbuildinfo
 !jest.config.js
+bff-service/.elasticbeanstalk/app_versions/

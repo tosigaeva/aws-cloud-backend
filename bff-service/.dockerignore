@@ -1,0 +1,18 @@
+# Dependencies are installed inside Docker layers from package-lock.json/package.json.
+node_modules
+
+# Build output is produced inside the Docker build stage.
+dist
+
+# Elastic Beanstalk local metadata is not needed inside the image.
+.elasticbeanstalk
+
+# Local environment files can contain service URLs/secrets. EB env vars should be configured outside Git.
+.env
+.env.*
+!.env.example
+
+# Logs and OS/editor files change often and should not invalidate Docker cache.
+*.log
+npm-debug.log*
+.DS_Store

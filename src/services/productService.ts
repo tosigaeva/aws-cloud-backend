@@ -56,6 +56,7 @@ export const getProductById = async (
 export const parseCreateProductRequest = (request: CreateProductRequest): Product => {
   const title = typeof request.title === 'string' ? request.title.trim() : '';
   const description = typeof request.description === 'string' ? request.description.trim() : '';
+  const imageUrl = typeof request.imageUrl === 'string' ? request.imageUrl.trim() : '';
   const price = Number(request.price);
   const count = Number(request.count);
   const id = typeof request.id === 'string' && request.id.trim() ? request.id.trim() : randomUUID();
@@ -76,6 +77,7 @@ export const parseCreateProductRequest = (request: CreateProductRequest): Produc
     id,
     title,
     description,
+    imageUrl,
     price,
     count,
   };
@@ -92,6 +94,7 @@ export const createProduct = async (
       id: product.id,
       title: product.title,
       description: product.description,
+      imageUrl: product.imageUrl,
       price: product.price,
     },
     {

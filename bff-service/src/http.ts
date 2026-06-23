@@ -50,11 +50,14 @@ export function readRequestBody(request: IncomingMessage): Promise<ArrayBuffer |
   });
 }
 
-export function copyRequestHeaders(request: IncomingMessage): Headers {
+export function copyRequestHeaders(request: IncomingMessage, excludedHeaders: string[] = []): Headers {
   const headers = new Headers();
+  const excludedHeaderSet = new Set(excludedHeaders.map((header) => header.toLowerCase()));
 
   Object.entries(request.headers).forEach(([key, value]) => {
-    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase()) || value === undefined) {
+    const normalizedKey = key.toLowerCase();
+
+    if (HOP_BY_HOP_HEADERS.has(normalizedKey) || excludedHeaderSet.has(normalizedKey) || value === undefined) {
       return;
     }
 

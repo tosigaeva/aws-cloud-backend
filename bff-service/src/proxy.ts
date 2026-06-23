@@ -63,9 +63,10 @@ export async function handleProxyRequest(
   const requestBody = METHODS_WITHOUT_BODY.has(method) ? undefined : await readRequestBody(request);
 
   try {
+    const excludedHeaders = parsedRequest.recipientName === 'product' ? ['authorization'] : [];
     const upstreamResponse = await fetch(parsedRequest.upstreamUrl, {
       method,
-      headers: copyRequestHeaders(request),
+      headers: copyRequestHeaders(request, excludedHeaders),
       body: requestBody,
     });
 

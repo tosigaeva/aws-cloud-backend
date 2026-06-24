@@ -37,3 +37,11 @@ export function setCachedResponse(
     expiresAt: Date.now() + ttlMs,
   });
 }
+
+export function clearProductsListCache(): void {
+  for (const cacheKey of cache.keys()) {
+    if (cacheKey.includes('/products')) {
+      cache.delete(cacheKey);
+    }
+  }
+}

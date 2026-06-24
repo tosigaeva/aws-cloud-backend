@@ -1,5 +1,10 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
-import { getCachedResponse, isProductsListCacheableRequest, setCachedResponse } from './cache';
+import {
+  clearProductsListCache,
+  getCachedResponse,
+  isProductsListCacheableRequest,
+  setCachedResponse,
+} from './cache';
 import { copyRequestHeaders, copyResponseHeaders, readRequestBody, sendJson } from './http';
 import { BffConfig, getRecipientUrl } from './config';
 
@@ -79,6 +84,10 @@ export async function handleProxyRequest(
         headers: responseHeaders,
         body: responseBody,
       });
+    }
+
+    if (parsedRequest.recipientName === 'product' && method !== 'GET' && upstreamResponse.ok) {
+      clearProductsListCache();
     }
 
     response.writeHead(upstreamResponse.status, responseHeaders);

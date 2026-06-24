@@ -47,6 +47,9 @@ test('catalogBatchProcess creates products and publishes notification', async ()
       createdProducts.push(product);
       createdStocks.push(stock);
     },
+    async deleteProduct() {
+      return undefined;
+    },
   };
   const publisher: ProductNotificationPublisher = {
     async publishProductsCreated(products) {
@@ -70,6 +73,7 @@ test('catalogBatchProcess creates products and publishes notification', async ()
       id: '19ba3d6a-f8ed-491b-a192-0a33b71b38c4',
       title: 'Imported product',
       description: 'From CSV',
+      imageUrl: '',
       price: 200,
     },
   ]);

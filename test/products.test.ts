@@ -13,6 +13,7 @@ const products: ProductRecord[] = [
     id: productId,
     title: 'Cloud Native Backpack',
     description: 'Durable daypack with a laptop sleeve and weather-resistant shell.',
+    imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80',
     price: 79,
   },
 ];
@@ -40,6 +41,18 @@ const createRepository = (): ProductsRepository => ({
     products.push(product);
     stocks.push(stock);
   },
+  async deleteProduct(id: string) {
+    const productIndex = products.findIndex((product) => product.id === id);
+    const stockIndex = stocks.findIndex((stock) => stock.product_id === id);
+
+    if (productIndex !== -1) {
+      products.splice(productIndex, 1);
+    }
+
+    if (stockIndex !== -1) {
+      stocks.splice(stockIndex, 1);
+    }
+  },
 });
 
 const createFailingRepository = (): ProductsRepository => ({
@@ -56,6 +69,9 @@ const createFailingRepository = (): ProductsRepository => ({
     throw new Error('DB connection failed');
   },
   async createProduct() {
+    throw new Error('DB connection failed');
+  },
+  async deleteProduct() {
     throw new Error('DB connection failed');
   },
 });
@@ -123,6 +139,7 @@ test('createProduct returns created product', async () => {
         id,
         title: 'New Product',
         description: 'Fresh catalog item',
+        imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
         price: 200,
         count: 2,
       }),
@@ -135,6 +152,7 @@ test('createProduct returns created product', async () => {
     id,
     title: 'New Product',
     description: 'Fresh catalog item',
+    imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
     price: 200,
     count: 2,
   });

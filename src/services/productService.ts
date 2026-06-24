@@ -7,6 +7,7 @@ export type ProductsRepository = {
   getProductById: (id: string) => Promise<ProductRecord | undefined>;
   getStockByProductId: (productId: string) => Promise<StockRecord | undefined>;
   createProduct: (product: ProductRecord, stock: StockRecord) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
 };
 
 export class ValidationError extends Error {
@@ -104,4 +105,17 @@ export const createProduct = async (
   );
 
   return product;
+};
+
+export const deleteProduct = async (
+  repository: ProductsRepository,
+  productId: string,
+): Promise<void> => {
+  const normalizedProductId = productId.trim();
+
+  if (!normalizedProductId) {
+    throw new ValidationError('Product id is required');
+  }
+
+  await repository.deleteProduct(normalizedProductId);
 };

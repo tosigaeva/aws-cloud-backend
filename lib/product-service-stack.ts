@@ -108,6 +108,17 @@ export class ProductServiceStack extends cdk.Stack {
       },
     });
 
+    const deleteProduct = new NodejsFunction(this, 'deleteProduct', {
+      ...sharedLambdaProps,
+      functionName: 'deleteProduct',
+      entry: path.join(__dirname, '../src/lambdas/deleteProduct/index.ts'),
+      environment: tableEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+    });
+
     const catalogBatchProcess = new NodejsFunction(this, 'catalogBatchProcess', {
       ...sharedLambdaProps,
       functionName: 'catalogBatchProcess',
@@ -129,9 +140,18 @@ export class ProductServiceStack extends cdk.Stack {
     stocksTable.grantReadData(getProductsById);
     productsTable.grantWriteData(createProduct);
     stocksTable.grantWriteData(createProduct);
+    productsTable.grantWriteData(deleteProduct);
+    stocksTable.grantWriteData(deleteProduct);
     productsTable.grantWriteData(catalogBatchProcess);
     stocksTable.grantWriteData(catalogBatchProcess);
     createProduct.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['dynamodb:TransactWriteItems'],
+      resources: [
+        productsTable.tableArn,
+        stocksTable.tableArn,
+      ],
+    }));
+    deleteProduct.addToRolePolicy(new iam.PolicyStatement({
       actions: ['dynamodb:TransactWriteItems'],
       resources: [
         productsTable.tableArn,
@@ -170,6 +190,7 @@ export class ProductServiceStack extends cdk.Stack {
 
     const product = products.addResource('{productId}');
     product.addMethod('GET', new apigateway.LambdaIntegration(getProductsById));
+    product.addMethod('DELETE', new apigateway.LambdaIntegration(deleteProduct));
 
     new cdk.CfnOutput(this, 'ProductsApiUrl', {
       value: api.urlForPath('/products'),

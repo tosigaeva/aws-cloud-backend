@@ -68,14 +68,31 @@ export const createProductsRepository = (): ProductsRepository => {
             Put: {
               TableName: productsTableName,
               Item: product,
-              ConditionExpression: 'attribute_not_exists(id)',
             },
           },
           {
             Put: {
               TableName: stocksTableName,
               Item: stock,
-              ConditionExpression: 'attribute_not_exists(product_id)',
+            },
+          },
+        ],
+      }));
+    },
+
+    async deleteProduct(productId: string) {
+      await dynamoDb.send(new TransactWriteCommand({
+        TransactItems: [
+          {
+            Delete: {
+              TableName: productsTableName,
+              Key: { id: productId },
+            },
+          },
+          {
+            Delete: {
+              TableName: stocksTableName,
+              Key: { product_id: productId },
             },
           },
         ],

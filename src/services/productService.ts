@@ -7,6 +7,7 @@ export type ProductsRepository = {
   getProductById: (id: string) => Promise<ProductRecord | undefined>;
   getStockByProductId: (productId: string) => Promise<StockRecord | undefined>;
   createProduct: (product: ProductRecord, stock: StockRecord) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
 };
 
 export class ValidationError extends Error {
@@ -56,6 +57,7 @@ export const getProductById = async (
 export const parseCreateProductRequest = (request: CreateProductRequest): Product => {
   const title = typeof request.title === 'string' ? request.title.trim() : '';
   const description = typeof request.description === 'string' ? request.description.trim() : '';
+  const imageUrl = typeof request.imageUrl === 'string' ? request.imageUrl.trim() : '';
   const price = Number(request.price);
   const count = Number(request.count);
   const id = typeof request.id === 'string' && request.id.trim() ? request.id.trim() : randomUUID();
@@ -76,6 +78,7 @@ export const parseCreateProductRequest = (request: CreateProductRequest): Produc
     id,
     title,
     description,
+    imageUrl,
     price,
     count,
   };
@@ -92,6 +95,7 @@ export const createProduct = async (
       id: product.id,
       title: product.title,
       description: product.description,
+      imageUrl: product.imageUrl,
       price: product.price,
     },
     {
@@ -101,4 +105,17 @@ export const createProduct = async (
   );
 
   return product;
+};
+
+export const deleteProduct = async (
+  repository: ProductsRepository,
+  productId: string,
+): Promise<void> => {
+  const normalizedProductId = productId.trim();
+
+  if (!normalizedProductId) {
+    throw new ValidationError('Product id is required');
+  }
+
+  await repository.deleteProduct(normalizedProductId);
 };
